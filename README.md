@@ -1,18 +1,7 @@
-# UniGoal — Object-Oriented Software Design Final Project
+Object-Oriented Software Design Final Project
 
 > **Course:** Object-Oriented Software Design (物件導向軟體設計)
 > **Project:** A Smart Shopping & Indoor-Navigation Companion
-> **Report language:** English
-
-This repository is the final-project submission. It contains the complete set of
-design documents (Chapters 4–8), a full **Word** version of the report, the
-**Android shopping app** source, and the **navigation backend** source.
-
-All diagrams in the Markdown docs are written in **Mermaid** and render
-automatically on GitHub. The same diagrams are rendered to images and embedded
-in the Word report.
-
----
 
 ## 1. Software + Hardware Project Overview
 
