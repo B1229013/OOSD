@@ -106,18 +106,3 @@ but the phone camera. The in-store navigation is powered by a separate
   key attributes, operations, and the associations/dependencies between classes.
 
 ---
-
-## 4. Running the system (quick start)
-
-**Backend** (see `backend/process.md` for full setup):
-
-```bash
-cd backend
-python -m server.run_server          # starts FastAPI on :8000 (needs Ollama + GroundingDINO weights)
-```
-
-**Android app**: open `android-app/` in Android Studio, supply the API keys in
-`local.properties` / `BuildConfig` (`GROQ_API_KEY`, `PADDLEOCR_ACCESS_TOKEN`,
-`MAPS_API_KEY`), and run on a device/emulator. The app reaches the backend at
-`http://10.0.2.2:8000` from an emulator (change to your PC's LAN IP for a
-physical phone).
