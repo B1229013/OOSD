@@ -1,108 +1,541 @@
-Object-Oriented Software Design Final Project
+# Activity Diagrams — Vision Recognition & Diet Analysis Modules
 
-> **Course:** Object-Oriented Software Design (物件導向軟體設計)
-> **Project:** A Smart Shopping & Indoor-Navigation Companion
-
-## 1. Software + Hardware Project Overview
-
-Our information system is a **smart shopping companion** for everyday grocery
-trips. It runs as an **Android app** that helps a user *plan* what to buy,
-*budget and track* spending and nutrition, *get AI advice*, *find nearby
-stores*, and finally *navigate inside the store* to each product using nothing
-but the phone camera. The in-store navigation is powered by a separate
-**Python vision backend** called **UniGoal**.
-
-### 1.1 Hardware
-
-| Component | Role |
-|-----------|------|
-| **Smartphone (Android)** | Runs the app. Its **camera** scans receipts and nutrition labels and drives in-store navigation; its **GPS** powers nearby-store search; its screen is the whole UI. |
-| **Backend server (CPU or CUDA GPU)** | Runs the UniGoal navigation backend: the object detector, the OCR engine, and the vision-language model. GPU optional — the system auto-detects and falls back to CPU. |
-
-### 1.2 Software
-
-**Frontend — Android app** (`android-app/`)
-
-| Area | Technology |
-|------|-----------|
-| Language / UI | Kotlin + Jetpack Compose (Material 3) |
-| Networking | OkHttp + Retrofit (JSON over HTTP) |
-| On-device vision | Google ML Kit text recognition |
-| Local data | Kotlin serialization (`@Serializable` models) |
-
-**Backend — UniGoal navigation server** (`backend/`)
-
-| Area | Technology |
-|------|-----------|
-| Language / API | Python 3.12 + FastAPI |
-| Object detection | GroundingDINO (open-vocabulary detector) |
-| Text reading | EasyOCR (English + Traditional Chinese) |
-| Reasoning | Ollama vision-language model (`llama3.2-vision`) |
-| Map | NetworkX directed graph (topological map) |
-
-**External cloud services (actors)**
-
-| Service | Used for |
-|---------|----------|
-| **Groq API** (`llama-3.3-70b`) | The in-app AI assistant and receipt-to-line-item parsing. |
-| **PaddleOCR cloud API** | Reading receipts and nutrition labels into text. |
-| **Google Places API** | Finding nearby stores; AR overlay. |
-| **UniGoal backend + Ollama VLM** | Real-time in-store visual navigation. |
-
-### 1.3 The eight functions of the system
-
-| # | Function | Primary actor | Where it lives |
-|---|----------|---------------|----------------|
-| 1 | **Manage Shopping List** | User | App — *清單* tab |
-| 2 | **Scan Receipt & Track Budget** | User | App — *預算* tab (PaddleOCR + Groq) |
-| 3 | **Log Diet & Nutrition** | User | App — *分析* tab (PaddleOCR) |
-| 4 | **Consult AI Shopping Assistant** | User | App — *助理* tab (Groq) |
-| 5 | **Find Nearby Stores** | User | App — nearby-stores sheet (Google Places) |
-| 6 | **In-Store Visual Navigation** | User | App *navigation* screen + UniGoal backend |
-| 7 | **Build Environment Map (offline)** | Mapping Operator | Backend — `batch_mapper` |
-| 8 | **Query Product Location on Map** | User / Operator | Backend — `navigate_to_product` |
-
-### 1.4 Actors
-
-- **User** — the shopper using the app.
-- **Mapping Operator** — the technician who builds the topological map of a new
-  store offline.
-- **Groq AI Service**, **PaddleOCR Service**, **Google Places Service**,
-  **UniGoal Backend / Ollama VLM** — external/supporting actors the system calls.
+This document provides detailed activity diagrams for the key use cases in both modules. These diagrams show the flow of activities, decision points, and system interactions.
 
 ---
 
-## 2. Repository layout
+## Table of Contents
 
-| Path | Contents |
-|------|----------|
-| [`docs/`](docs/) | The five design documents (Chapters 4–8) as Markdown with Mermaid diagrams. |
-| [`docs/images/`](docs/images/) | The diagrams rendered to PNG (used by the Word report). |
-| [`report/`](report/) | **`UniGoal_OOSD_Report.docx`** — the full Word report combining all chapters. |
-| [`android-app/`](android-app/) | The Android shopping-companion app (Kotlin / Jetpack Compose). |
-| [`backend/`](backend/) | The UniGoal navigation backend (Python / FastAPI). |
+1. [Vision Recognition Module](#vision-recognition-module)
+   - [AD1: Start Navigation Session](#ad1-start-navigation-session)
+   - [AD2: Capture & Upload Photo](#ad2-capture--upload-photo)
+   - [AD3: Build Environment Map](#ad3-build-environment-map)
+   - [AD4: Query Product Location](#ad4-query-product-location)
+
+2. [Diet Analysis Module](#diet-analysis-module)
+   - [AD5: Log Diet & Nutrition](#ad5-log-diet--nutrition)
+   - [AD6: Scan Nutrition Label](#ad6-scan-nutrition-label)
+
+3. [Legend](#legend)
+
+---
+
+## Vision Recognition Module
+
+### AD1: Start Navigation Session
+
+**Purpose**: User states a product goal; system decomposes it into navigation landmarks
+
+```
+Mermaid Activity Diagram Specification:
+
+Start
+↓
+User enters product goal (e.g., "Find milk")
+↓
+System creates navigation session
+↓
+System records goal in current context
+↓
+System + Current Map Context → Ollama VLM
+↓
+[Decision: Goal found in knowledge base?]
+├─ YES → VLM decomposes goal into landmarks (e.g., "Enter store → Find aisle → Locate shelf")
+│   ↓
+│   System displays decomposed plan
+│   ↓
+│   System prompts user to start capturing photos
+│   ↓
+│   Navigation Session Created ✓
+│   ↓
+│   End
+│
+└─ NO → System informs user
+    ↓
+    System suggests alternatives or manual search
+    ↓
+    [Decision: User accepts alternative?]
+    ├─ YES → Restart with new goal
+    │
+    └─ NO → Navigation Session NOT created
+        ↓
+        End
+```
+
+**Swimlanes**: User, System, Ollama VLM Service
 
 ---
 
-## 3. How the documents map to the assignment
+### AD2: Capture & Upload Photo
 
-| Chapter | Deliverable | File |
-|---------|-------------|------|
-| **Ch. 4** | A complete **glossary** (Term / Definition / Notes). | [`docs/01-glossary.md`](docs/01-glossary.md) |
-| **Ch. 5** | **N use case diagrams** — one per function (N = 8). | [`docs/02-use-case-diagrams.md`](docs/02-use-case-diagrams.md) |
-| **Ch. 6** | **M use case descriptions** per diagram — one *normal* scenario + *exception* scenarios. | [`docs/03-use-case-descriptions.md`](docs/03-use-case-descriptions.md) |
-| **Ch. 7** | One **activity diagram** per use case diagram. | [`docs/04-activity-diagrams.md`](docs/04-activity-diagrams.md) |
-| **Ch. 8** | One **class diagram** for the whole information system. | [`docs/05-class-diagram.md`](docs/05-class-diagram.md) |
+**Purpose**: User captures photo; system processes it and returns navigation instruction (MOVE/ASK/ARRIVED)
 
-### How to read the diagrams
+```
+Mermaid Activity Diagram Specification:
 
-- **Use case diagrams**: a box is the *system boundary*; rounded shapes are *use
-  cases*; lines join actors to the use cases they take part in; dashed arrows
-  carry `«include»` / `«extend»`.
-- **Activity diagrams**: read top-to-bottom — start node, rectangular actions,
-  diamond decisions with guard labels, end nodes. Exception paths branch off the
-  decisions.
-- **Class diagram**: two namespaces (Android client, navigation backend) with
-  key attributes, operations, and the associations/dependencies between classes.
+Start
+↓
+[Active Navigation Session?]
+├─ NO → Prompt user to start session
+│   ↓
+│   End
+│
+└─ YES → User taps camera button
+    ↓
+    User captures photo of surroundings
+    ↓
+    System uploads photo to backend
+    ↓
+    ┌─────────────────────────────┐
+    │ Parallel Processing:        │
+    │ 1. Send to GroundingDINO    │
+    │ 2. Extract OCR text         │
+    └─────────────────────────────┘
+    ↓
+    GroundingDINO detects objects (doors, aisles, shelves, signs, plants)
+    ↓
+    System extracts visible text using OCR
+    ↓
+    [Decision: Objects detected & text extracted?]
+    ├─ NO (Blurry/unrecognizable) → System asks user to retake photo
+    │   ↓
+    │   [Decision: User retakes?]
+    │   ├─ YES → Back to camera capture
+    │   └─ NO → End without node creation
+    │
+    └─ YES → Prepare inference payload
+        ↓
+        Payload: Original image + detections + OCR + goal + history
+        ↓
+        System sends to Ollama VLM
+        ↓
+        VLM processes and reasons about scene
+        ↓
+        [Decision: VLM output valid?]
+        ├─ NO (Unparseable/Ambiguous) → System asks user to describe scene
+        │   ↓
+        │   User provides description
+        │   ↓
+        │   System sends description + image to VLM again
+        │   ↓
+        │   VLM re-reasons
+        │   ↓
+        │   Proceed to response handling
+        │
+        └─ YES → Proceed to response handling
+            ↓
+            [Decision: VLM Response Type]
+            ├─ MOVE {direction} → Display navigation direction
+            │   ↓
+            │   Create topological node with: image ID, detections, VLM response, navigation state
+            │   ↓
+            │   Update map: add edge between previous node and new node
+            │   ↓
+            │   End
+            │
+            ├─ ASK {question} → Display clarification question to user
+            │   ↓
+            │   Create node (intermediate state)
+            │   ↓
+            │   [Awaiting user response]
+            │   ↓
+            │   End
+            │
+            └─ ARRIVED {landmark} → Verify user has reached target
+                ↓
+                Display success message with landmark
+                ↓
+                Create final topological node
+                ↓
+                Update map
+                ↓
+                End
+```
+
+**Swimlanes**: User, System, GroundingDINO Service, Ollama VLM Service, Database
 
 ---
+
+### AD3: Build Environment Map
+
+**Purpose**: Offline batch process to build a topological map from survey photos
+
+```
+Mermaid Activity Diagram Specification:
+
+Start
+↓
+Mapping Operator provides folder of survey photos
+↓
+System initializes batch mapper
+↓
+System reads list of photos from folder
+↓
+┌──────────────────────────────┐
+│ For Each Photo:              │
+├──────────────────────────────┤
+│
+│ ↓ Send photo to GroundingDINO
+│ ↓ GroundingDINO detects objects & landmarks
+│ ↓ Store detections in memory (object ID, location, confidence)
+│
+│ [Decision: All photos processed?]
+│ └─ NO → Next photo (loop)
+│    YES → Proceed to clustering
+│
+└──────────────────────────────┘
+↓
+[Phase: Clustering]
+↓
+System groups photos into zones based on shared objects
+├─ Photos with "Frozen Foods" sign → Zone 1 (Frozen Aisle)
+├─ Photos with "Produce" sign → Zone 2 (Produce Section)
+├─ Photos with "Checkout" sign → Zone 3 (Checkout Area)
+└─ [Repeated for all zones]
+↓
+[Decision: Clustering consistent?]
+├─ NO (Gaps or noise) → Flag photos; suggest retakes
+│   ↓
+│   System pauses batch run
+│   ↓
+│   Operator reviews and adds more photos
+│   ↓
+│   Resume from clustering
+│
+└─ YES → Proceed to edge building
+    ↓
+    [Phase: Build Graph Edges]
+    ↓
+    ┌──────────────────────────────┐
+    │ For Each Zone Pair:          │
+    ├──────────────────────────────┤
+    │
+    │ [Decision: Zones share objects?]
+    │ ├─ YES → Create edge (Zone A ↔ Zone B)
+    │ └─ NO → No connection
+    │
+    └──────────────────────────────┘
+    ↓
+    System saves all detections, clusters, zones to JSON file
+    ↓
+    System renders topological map image:
+    ├─ Nodes = Zones
+    ├─ Edges = Adjacent zones
+    └─ Labels = Zone names
+    ↓
+    Map image saved to filesystem
+    ↓
+    Operator reviews rendered map
+    ↓
+    [Decision: Map acceptable?]
+    ├─ NO → Operator can manually annotate/adjust
+    │   ↓
+    │   System updates map
+    │   ↓
+    │   Save finalized version
+    │
+    └─ YES → Map approved
+        ↓
+        End
+```
+
+**Swimlanes**: Mapping Operator, System, GroundingDINO Service, File Storage, Database
+
+---
+
+### AD4: Query Product Location
+
+**Purpose**: User searches for product; system returns directions on pre-built map
+
+```
+Mermaid Activity Diagram Specification:
+
+Start
+↓
+User enters product query (e.g., "milk", "SKU-12345")
+↓
+[Decision: Store map loaded?]
+├─ NO → System loads offline map from database
+│   ↓
+│   Proceed to fuzzy matching
+│
+└─ YES → Proceed to fuzzy matching
+    ↓
+    System fuzzy-matches query against knowledge base
+    ↓
+    [Decision: Product found?]
+    ├─ NO → System suggests similar products or shows product list
+    │   ↓
+    │   [Decision: User refines search?]
+    │   ├─ YES → New query (restart from fuzzy matching)
+    │   └─ NO → End without directions
+    │
+    └─ YES → Identify zone(s) where product is located
+        ↓
+        System computes shortest path:
+        ├─ Start point: Current location (or store entrance)
+        ├─ End point: Target zone
+        └─ Use graph edges to find shortest route
+        ↓
+        [Decision: Path found?]
+        ├─ NO → Product unreachable / path error
+        │   ↓
+        │   System notifies user
+        │   ↓
+        │   End
+        │
+        └─ YES → Build step-by-step directions
+            ├─ Step 1: Enter store → Aisle entrance
+            ├─ Step 2: Walk to frozen section
+            ├─ Step 3: Find milk shelf
+            └─ [More steps as needed]
+            ↓
+            System displays directions to user
+            ↓
+            [Decision: User wants visual navigation?]
+            ├─ YES → Start visual navigation session (AD1 + AD2)
+            │   ↓
+            │   End
+            │
+            └─ NO → User follows text directions
+                ↓
+                End
+```
+
+**Swimlanes**: User, System, Database, Knowledge Base
+
+---
+
+## Diet Analysis Module
+
+### AD5: Log Diet & Nutrition
+
+**Purpose**: Main use case for recording food intake (can use scanning OR manual entry)
+
+```
+Mermaid Activity Diagram Specification:
+
+Start
+↓
+User opens Diet Analysis tab
+↓
+System displays diet logging interface
+↓
+[Decision: How to enter?]
+├─ SCAN → Proceed to AD6 (Scan Nutrition Label)
+│
+└─ MANUAL → Proceed to manual entry
+    ↓
+    System displays form:
+    ├─ Food name input field
+    └─ Nutrition values (calories, carbs, protein, fat)
+    ↓
+    User enters food name (e.g., "Apple")
+    ↓
+    User enters nutrition values:
+    ├─ Calories: 95 kcal
+    ├─ Carbs: 25g
+    ├─ Protein: 0.5g
+    └─ Fat: 0.3g
+    ↓
+    User submits form
+    ↓
+    [Decision: Input valid?]
+    ├─ NO (Empty fields / negative values) → System shows error
+    │   ↓
+    │   [Decision: User corrects?]
+    │   ├─ YES → Back to form entry
+    │   └─ NO → End without saving
+    │
+    └─ YES → Proceed to save
+        ↓
+        [Phase: Save Diet Record]
+        ↓
+        System creates record:
+        ├─ Food name: "Apple"
+        ├─ Nutrition values
+        ├─ Date/Time: Current timestamp
+        └─ User ID
+        ↓
+        System stores record in local database
+        ↓
+        [Phase: Summarise Daily Calories]
+        ↓
+        System queries all records for current date
+        ↓
+        System calculates totals:
+        ├─ Total calories: 2150 kcal
+        ├─ Total carbs: 285g
+        ├─ Total protein: 95g
+        └─ Total fat: 72g
+        ↓
+        [Decision: Daily goal exists?]
+        ├─ YES → Calculate remaining and % consumed
+        │   ├─ Daily goal: 2000 kcal
+        │   ├─ Consumed: 2150 kcal (107.5%)
+        │   └─ Remaining: -150 kcal (EXCEEDED)
+        │   ↓
+        │   [Decision: Goal exceeded?]
+        │   ├─ YES → Send notification to user
+        │   │   ↓
+        │   │   Proceed to display update
+        │   │
+        │   └─ NO → Proceed to display update
+        │
+        └─ NO → Display totals without goals
+            ↓
+            Proceed to display update
+        ↓
+        System updates diet summary display:
+        ├─ Today's totals (calories, macros)
+        ├─ Goal progress (if applicable)
+        └─ Recent food entries
+        ↓
+        User sees updated diet summary
+        ↓
+        End
+```
+
+**Swimlanes**: User, System, Database
+
+---
+
+### AD6: Scan Nutrition Label
+
+**Purpose**: User photographs nutrition label; OCR extracts values and saves record
+
+```
+Mermaid Activity Diagram Specification:
+
+Start
+↓
+User opens Diet Analysis tab
+↓
+User selects "Scan Nutrition Label"
+↓
+System opens camera interface
+↓
+User aligns camera with nutrition label
+↓
+User captures photo
+↓
+System sends image to PaddleOCR service
+↓
+PaddleOCR processes image and recognizes text
+↓
+[Decision: Text successfully extracted?]
+├─ NO (Label unreadable / unclear) → System asks user to retake
+│   ↓
+│   System displays: "Photo is unclear. Please retake with better lighting/angle."
+│   ↓
+│   [Decision: User retakes?]
+│   ├─ YES → Back to camera capture
+│   └─ NO → End without saving
+│
+└─ YES → System parses OCR output
+    ↓
+    System extracts nutrition values:
+    ├─ Calories (per serving): 150 kcal
+    ├─ Carbohydrates: 20g
+    ├─ Protein: 8g
+    ├─ Fat: 3g
+    └─ [Other nutrients as available]
+    ↓
+    [Decision: All key values found?]
+    ├─ NO (Missing calories or serving) → System asks user for clarification
+    │   ↓
+    │   System displays: "Serving size unclear. Please enter manually."
+    │   ↓
+    │   User enters missing values manually
+    │   ↓
+    │   Proceed to record creation
+    │
+    └─ YES → Proceed to record creation
+        ↓
+        System creates diet record:
+        ├─ Food name (inferred from label or user input)
+        ├─ Extracted nutrition values
+        ├─ Date/Time: Current timestamp
+        └─ Source: "Scanned label"
+        ↓
+        System stores record in database
+        ↓
+        [Phase: Summarise Daily Calories]
+        ↓
+        (Same as AD5 - recalculate totals and update display)
+        ↓
+        System updates diet summary
+        ↓
+        User sees confirmation: "Food logged successfully!"
+        ↓
+        [Decision: User wants to scan another?]
+        ├─ YES → Back to camera interface
+        └─ NO → End
+```
+
+**Swimlanes**: User, System, PaddleOCR Service, Database
+
+---
+
+## Legend
+
+### Activity Diagram Symbols
+
+| Symbol | Meaning |
+|--------|---------|
+| ● (Filled circle) | Start activity |
+| ○ (Empty circle) | End activity |
+| Rectangle | Activity/Action (process step) |
+| Diamond | Decision point (YES/NO branch) |
+| Arrow → | Flow of control |
+| ∥ | Parallel processing (fork/join bar) |
+| Rectangle with lines | Swimlane (actor/component) |
+| ┌─┐ | Subactivity/Phase group |
+
+### Key Concepts
+
+- **Decision Points**: Branches flow based on conditions (YES/NO)
+- **Parallel Processing**: Multiple activities can occur simultaneously (marked with ∥)
+- **Swimlanes**: Show which actor/component performs each activity
+- **Loops**: Activities can repeat based on conditions
+- **Subactivities**: Complex activities can be broken into phases
+
+---
+
+## How to Use These Diagrams
+
+1. **In Visual Paradigm**:
+   - Create a new Activity Diagram
+   - Add swimlanes for each actor (User, System, Services)
+   - Add activities and decision points following the flow above
+   - Connect with arrows
+
+2. **In Lucidchart**:
+   - Use the activity diagram shapes
+   - Organize by swimlanes
+   - Add decision branches with diamond shapes
+
+3. **In Draw.io / Miro**:
+   - Create swimlane containers
+   - Add activity shapes (rectangles) and decision shapes (diamonds)
+   - Connect with arrows
+
+4. **In Figma** (with plugins):
+   - Use diagram components
+   - Follow the flow structure above
+
+---
+
+## Notes
+
+- These activity diagrams represent the **happy paths** and **common exception flows**
+- Each diagram can be expanded with more detail as needed
+- Decision outcomes are marked with brackets: `[Decision: ...]`
+- Parallel activities are shown in boxes with vertical lines: `├─`, `└─`
+- For implementation, focus on swimlanes to understand responsibility distribution
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: 2026-06-12  
+**For**: OOSD Assignment - Vision Recognition & Diet Analysis Module
