@@ -1,54 +1,54 @@
-# Activity Diagrams — Vision Recognition & Diet Analysis Modules
+# 活動圖表 — 視覺語意辨識與飲食分析模組
 
-This document provides detailed activity diagrams for the key use cases in both modules. These diagrams show the flow of activities, decision points, and system interactions.
-
----
-
-## Table of Contents
-
-1. [Vision Recognition Module](#vision-recognition-module)
-   - [AD1: Start Navigation Session](#ad1-start-navigation-session)
-   - [AD2: Capture & Upload Photo](#ad2-capture--upload-photo)
-   - [AD3: Build Environment Map](#ad3-build-environment-map)
-   - [AD4: Query Product Location](#ad4-query-product-location)
-
-2. [Diet Analysis Module](#diet-analysis-module)
-   - [AD5: Log Diet & Nutrition](#ad5-log-diet--nutrition)
-   - [AD6: Scan Nutrition Label](#ad6-scan-nutrition-label)
-
-3. [Legend](#legend)
+本文件提供兩個模組主要使用案例的詳細活動圖表。這些圖表顯示活動流程、決策點和系統互動。
 
 ---
 
-## Vision Recognition Module
+## 目錄
 
-### AD1: Start Navigation Session
+1. [視覺語意辨識模組](#視覺語意辨識模組)
+   - [AD1：開始導航會話](#ad1開始導航會話)
+   - [AD2：擷取並上傳照片](#ad2擷取並上傳照片)
+   - [AD3：建構環境地圖](#ad3建構環境地圖)
+   - [AD4：查詢產品位置](#ad4查詢產品位置)
 
-**Purpose**: User states a product goal; system decomposes it into navigation landmarks
+2. [飲食分析模組](#飲食分析模組)
+   - [AD5：記錄飲食與營養](#ad5記錄飲食與營養)
+   - [AD6：掃描營養標籤](#ad6掃描營養標籤)
+
+3. [圖例](#圖例)
+
+---
+
+## 視覺語意辨識模組
+
+### AD1: 開始導航會話
+
+**Purpose**: 使用者陳述產品目標；系統將其分解為導航地標
 
 ```mermaid
 graph TD
-    Start([Start]) --> UserInput["👤 User Enters Product Goal<br/>(e.g., 'Find milk')"]
-    UserInput --> CreateSession["⚙️ System Creates<br/>Navigation Session"]
-    CreateSession --> RecordGoal["📝 System Records Goal<br/>in Context"]
-    RecordGoal --> PrepPayload["📦 Prepare VLM Payload<br/>(goal + map context)"]
-    PrepPayload --> CallVLM["🤖 Send to Ollama VLM<br/>for Decomposition"]
+    Start([開始]) --> UserInput["使用者輸入<br/>產品目標<br/>例如：找牛奶"]
+    UserInput --> CreateSession["系統建立<br/>導航會話"]
+    CreateSession --> RecordGoal["系統記錄<br/>目標到背景"]
+    RecordGoal --> PrepPayload["準備VLM<br/>輸入資料<br/>目標+地圖背景"]
+    PrepPayload --> CallVLM["發送到<br/>Ollama VLM<br/>進行分解"]
     
-    CallVLM --> DecisionFound{Goal Found in<br/>Knowledge Base?}
+    CallVLM --> DecisionFound{目標是否<br/>在知識庫<br/>中找到?}
     
-    DecisionFound -->|YES| DecomposeGoal["🔀 VLM Decomposes Goal<br/>into Landmarks"]
-    DecomposeGoal --> DisplayPlan["📊 System Displays<br/>Decomposed Plan"]
-    DisplayPlan --> PromptPhotos["📱 Prompt User to<br/>Start Capturing Photos"]
-    PromptPhotos --> SessionCreated["✅ Navigation Session<br/>Created Successfully"]
-    SessionCreated --> EndSuccess([End - Success])
+    DecisionFound -->|是| DecomposeGoal["VLM分解<br/>目標為<br/>地標步驟"]
+    DecomposeGoal --> DisplayPlan["系統顯示<br/>分解後的<br/>計劃"]
+    DisplayPlan --> PromptPhotos["提示使用者<br/>開始<br/>拍攝照片"]
+    PromptPhotos --> SessionCreated["導航會話<br/>成功建立"]
+    SessionCreated --> EndSuccess([結束 - 成功])
     
-    DecisionFound -->|NO| InformUser["⚠️ System Informs User<br/>Goal Not Found"]
-    InformUser --> SuggestAlternatives["💡 Suggest Alternatives<br/>or Manual Search"]
-    SuggestAlternatives --> DecisionAccept{User Accepts<br/>Alternative?}
+    DecisionFound -->|否| InformUser["系統通知<br/>使用者<br/>目標未找到"]
+    InformUser --> SuggestAlternatives["建議<br/>替代方案<br/>或手動搜尋"]
+    SuggestAlternatives --> DecisionAccept{使用者<br/>接受<br/>替代方案?}
     
-    DecisionAccept -->|YES| UserInput
-    DecisionAccept -->|NO| SessionFail["❌ Navigation Session<br/>NOT Created"]
-    SessionFail --> EndFail([End - Failure])
+    DecisionAccept -->|是| UserInput
+    DecisionAccept -->|否| SessionFail["導航會話<br/>未建立"]
+    SessionFail --> EndFail([結束 - 失敗])
     
     style Start fill:#90EE90
     style EndSuccess fill:#90EE90
@@ -63,71 +63,71 @@ graph TD
 
 ---
 
-### AD2: Capture & Upload Photo
+### AD2: 擷取並上傳照片
 
-**Purpose**: User captures photo; system processes it and returns navigation instruction (MOVE/ASK/ARRIVED)
+**Purpose**: 使用者拍攝照片；系統處理並返回導航指令（移動/詢問/已到達）
 
 ```mermaid
 graph TD
-    Start([Start]) --> CheckSession{Active Navigation<br/>Session?}
+    Start([開始]) --> CheckSession{存在有效的<br/>導航會話?}
     
-    CheckSession -->|NO| PromptSession["⚠️ Prompt User to<br/>Start Session"]
-    PromptSession --> EndNo([End - No Session])
+    CheckSession -->|否| PromptSession["提示使用者<br/>開始會話"]
+    PromptSession --> EndNo([結束 - 無會話])
     
-    CheckSession -->|YES| CameraButton["📸 User Taps Camera<br/>Button"]
-    CameraButton --> CapturePhoto["📷 User Captures Photo<br/>of Surroundings"]
-    CapturePhoto --> UploadPhoto["☁️ System Uploads Photo<br/>to Backend"]
+    CheckSession -->|是| CameraButton["使用者點擊<br/>相機按鈕"]
+    CameraButton --> CapturePhoto["使用者拍攝<br/>周圍環境<br/>的照片"]
+    CapturePhoto --> UploadPhoto["系統上傳<br/>照片到<br/>後端伺服器"]
     
-    UploadPhoto --> Fork["🔀 Fork: Parallel<br/>Processing"]
+    UploadPhoto --> Fork["開始<br/>平行處理"]
     
-    Fork --> Process1["🔍 Send to GroundingDINO<br/>for Object Detection"]
-    Fork --> Process2["📄 Extract Text using<br/>OCR"]
+    Fork --> Process1["發送到<br/>GroundingDINO<br/>進行物件偵測"]
+    Fork --> Process2["使用OCR<br/>提取文字"]
     
-    Process1 --> DetectObjects["🎯 GroundingDINO Detects:<br/>doors, aisles, shelves,<br/>signs, plants, objects"]
-    Process2 --> ExtractText["📋 System Extracts<br/>Visible Text"]
+    Process1 --> DetectObjects["GroundingDINO<br/>偵測：門、走道、<br/>架子、標示、<br/>植物、物件"]
+    Process2 --> ExtractText["系統提取<br/>可見的<br/>文字"]
     
-    DetectObjects --> Join["🔀 Join: Results<br/>Combined"]
+    DetectObjects --> Join["合併<br/>處理結果"]
     ExtractText --> Join
     
-    Join --> DecisionQuality{Objects Detected &<br/>Text Extracted<br/>Successfully?}
+    Join --> DecisionQuality{物件偵測<br/>和文字提取<br/>成功?}
     
-    DecisionQuality -->|NO| BlurryPhoto["❌ Photo too blurry<br/>or uninformative"]
-    BlurryPhoto --> RetakePrompt{User Retakes<br/>Photo?}
-    RetakePrompt -->|YES| CameraButton
-    RetakePrompt -->|NO| EndBlurry([End - Blurry Photo])
+    DecisionQuality -->|否| BlurryPhoto["照片太模糊<br/>或無信息"]
+    BlurryPhoto --> RetakePrompt{使用者<br/>重新<br/>拍攝?}
+    RetakePrompt -->|是| CameraButton
+    RetakePrompt -->|否| EndBlurry([結束 - 模糊照片])
     
-    DecisionQuality -->|YES| PrepPayload["📦 Prepare VLM Payload<br/>Image + detections +<br/>OCR + goal + history"]
-    PrepPayload --> SendVLM["🤖 Send to Ollama VLM<br/>for Scene Reasoning"]
-    SendVLM --> VLMReason["🧠 VLM Processes &<br/>Reasons About Scene"]
+    DecisionQuality -->|是| PrepPayload["準備VLM<br/>輸入資料<br/>照片+偵測結果<br/>+OCR+目標+歷史"]
+    PrepPayload --> SendVLM["發送到<br/>Ollama VLM<br/>進行場景推理"]
+    SendVLM --> VLMReason["VLM處理<br/>並推理<br/>場景"]
     
-    VLMReason --> DecisionVLM{VLM Output<br/>Valid &<br/>Parseable?}
+    VLMReason --> DecisionVLM{VLM輸出<br/>有效且<br/>可解析?}
     
-    DecisionVLM -->|NO| VLMError["⚠️ Unparseable or<br/>Ambiguous Response"]
-    VLMError --> AskDescribe["❓ Ask User to<br/>Describe Scene"]
-    AskDescribe --> UserDescribe["💬 User Provides<br/>Description"]
-    UserDescribe --> ResendVLM["🤖 Send Description +<br/>Image to VLM Again"]
+    DecisionVLM -->|否| VLMError["輸出無法<br/>解析或<br/>模糊"]
+    VLMError --> AskDescribe["詢問使用者<br/>描述<br/>所看到的"]
+    AskDescribe --> UserDescribe["使用者<br/>提供<br/>描述"]
+    UserDescribe --> ResendVLM["發送描述<br/>和照片<br/>到VLM"]
     ResendVLM --> VLMReason
     
-    DecisionVLM -->|YES| ResponseType{VLM Response<br/>Type?}
+    DecisionVLM -->|是| ResponseType{VLM<br/>回應<br/>類型?}
     
-    ResponseType -->|MOVE| HandleMove["➡️ VLM Returns:<br/>MOVE direction"]
-    HandleMove --> DisplayMove["🗺️ Display Navigation<br/>Direction to User"]
-    DisplayMove --> CreateNode1["📍 Create Topological Node<br/>image ID, detections,<br/>VLM response"]
-    CreateNode1 --> UpdateMap1["🔗 Update Map: Add Edge<br/>between nodes"]
-    UpdateMap1 --> EndMove([End - Moving])
+    ResponseType -->|移動| HandleMove["VLM返回：<br/>移動方向"]
+    HandleMove --> DisplayMove["顯示導航<br/>方向給<br/>使用者"]
+    DisplayMove --> CreateNode1["建立拓樸<br/>節點<br/>記錄偵測結果"]
+    CreateNode1 --> UpdateMap1["更新地圖：<br/>新增節點<br/>之間的邊"]
+    UpdateMap1 --> EndMove([結束 - 移動中])
     
-    ResponseType -->|ASK| HandleAsk["❓ VLM Returns:<br/>ASK clarification"]
-    HandleAsk --> DisplayAsk["💬 Display Question<br/>to User"]
-    DisplayAsk --> CreateNode2["📍 Create Node<br/>intermediate state"]
-    CreateNode2 --> Waiting["⏳ Await User<br/>Response"]
-    Waiting --> EndAsk([End - Awaiting Response])
+    ResponseType -->|詢問| HandleAsk["VLM返回：<br/>詢問澄清"]
+    HandleAsk --> DisplayAsk["顯示問題<br/>給使用者"]
+    DisplayAsk --> CreateNode2["建立節點<br/>中間狀態"]
+    CreateNode2 --> Waiting["等待使用者<br/>回應"]
+    Waiting --> EndAsk([結束 - 等待回應])
     
-    ResponseType -->|ARRIVED| HandleArrived["✅ VLM Returns:<br/>ARRIVED at landmark"]
-    HandleArrived --> VerifyLandmark["✔️ Verify User<br/>Reached Target"]
-    VerifyLandmark --> DisplaySuccess["🎉 Display Success<br/>Message with Landmark"]
-    DisplaySuccess --> CreateNode3["📍 Create Final Node"]
-    CreateNode3 --> UpdateMap2["🔗 Update Map"]
-    UpdateMap2 --> EndArrive([End - Arrived])
+    ResponseType -->|已到達| HandleArrived["VLM返回：<br/>已到達地標"]
+    HandleArrived --> VerifyLandmark["驗證使用者<br/>到達<br/>目標"]
+    VerifyLandmark --> DisplaySuccess["顯示成功<br/>訊息與<br/>地標名稱"]
+    DisplaySuccess --> CreateNode3["建立最終<br/>節點"]
+    CreateNode3 --> UpdateMap2["更新地圖"]
+    UpdateMap2 --> EndArrive([結束 - 已到達])
     
     style Start fill:#90EE90
     style EndNo fill:#FFB6C6
@@ -147,66 +147,66 @@ graph TD
 
 ---
 
-### AD3: Build Environment Map
+### AD3: 建構環境地圖
 
-**Purpose**: Offline batch process to build a topological map from survey photos
+**Purpose**: 離線批次處理，從調查照片建構拓樸地圖
 
 ```mermaid
 graph TD
-    Start([Start]) --> OperatorInput["👤 Mapping Operator Provides<br/>Survey Photo Folder"]
-    OperatorInput --> InitBatch["⚙️ System Initializes<br/>Batch Mapper"]
-    InitBatch --> ReadPhotos["📂 System Reads List<br/>of Photos from Folder"]
-    ReadPhotos --> LoopStart["🔄 Begin Loop:<br/>For Each Photo"]
+    Start([開始]) --> OperatorInput["地圖操作員<br/>提供調查<br/>照片資料夾"]
+    OperatorInput --> InitBatch["系統初始化<br/>批次映射器"]
+    InitBatch --> ReadPhotos["系統讀取<br/>照片列表<br/>從資料夾"]
+    ReadPhotos --> LoopStart["開始迴圈：<br/>每張照片"]
     
-    LoopStart --> SendDINO["📸 Send Photo to<br/>GroundingDINO"]
-    SendDINO --> DetectObjects["🎯 GroundingDINO Detects<br/>Objects & Landmarks"]
-    DetectObjects --> StoreDetections["💾 Store Detections<br/>in Memory"]
+    LoopStart --> SendDINO["發送照片<br/>到<br/>GroundingDINO"]
+    SendDINO --> DetectObjects["GroundingDINO<br/>偵測物件<br/>和地標"]
+    DetectObjects --> StoreDetections["在記憶體<br/>中儲存<br/>偵測結果"]
     
-    StoreDetections --> LoopCheck{All Photos<br/>Processed?}
-    LoopCheck -->|NO| LoopStart
-    LoopCheck -->|YES| ClusterPhase["📊 Phase: Clustering"]
+    StoreDetections --> LoopCheck{所有照片<br/>都已<br/>處理?}
+    LoopCheck -->|否| LoopStart
+    LoopCheck -->|是| ClusterPhase["階段：聚類"]
     
-    ClusterPhase --> GroupZones["🗺️ System Groups Photos<br/>into Zones Based on<br/>Shared Objects"]
-    GroupZones --> Zone1["🏪 Zone 1: Frozen Aisle<br/>shared 'Frozen Foods' sign"]
-    GroupZones --> Zone2["🥬 Zone 2: Produce<br/>shared 'Produce' sign"]
-    GroupZones --> Zone3["💳 Zone 3: Checkout<br/>shared 'Checkout' sign"]
+    ClusterPhase --> GroupZones["系統根據<br/>共享物件<br/>將照片分組為區域"]
+    GroupZones --> Zone1["區域1：冷凍走道<br/>共享『冷凍食品』標示"]
+    GroupZones --> Zone2["區域2：農產品<br/>共享『農產品』標示"]
+    GroupZones --> Zone3["區域3：結帳<br/>共享『結帳』標示"]
     
-    Zone1 --> ClusterCheck{Clustering<br/>Consistent?<br/>No Gaps/Noise?}
+    Zone1 --> ClusterCheck{聚類<br/>一致?<br/>無間隙/雜訊?}
     Zone2 --> ClusterCheck
     Zone3 --> ClusterCheck
     
-    ClusterCheck -->|NO| FlagPhotos["⚠️ Flag Photos<br/>with Issues"]
-    FlagPhotos --> SuggestRetake["📸 Suggest Operator<br/>Retake Photos"]
-    SuggestRetake --> PauseRun["⏸️ Pause Batch Run"]
-    PauseRun --> OperatorReview["👤 Operator Reviews<br/>& Adds More Photos"]
+    ClusterCheck -->|否| FlagPhotos["標記有<br/>問題的<br/>照片"]
+    FlagPhotos --> SuggestRetake["建議操作員<br/>重新<br/>拍攝"]
+    SuggestRetake --> PauseRun["暫停<br/>批次<br/>運行"]
+    PauseRun --> OperatorReview["操作員<br/>檢視並<br/>新增照片"]
     OperatorReview --> ReadPhotos
     
-    ClusterCheck -->|YES| EdgePhase["🔗 Phase: Build Graph Edges"]
+    ClusterCheck -->|是| EdgePhase["階段：建立圖邊"]
     
-    EdgePhase --> EdgeLoop["🔄 For Each Zone Pair"]
-    EdgeLoop --> CheckShared{Zones Share<br/>Objects?}
+    EdgePhase --> EdgeLoop["迴圈：<br/>每對區域"]
+    EdgeLoop --> CheckShared{區域<br/>共享<br/>物件?}
     
-    CheckShared -->|YES| CreateEdge["🔀 Create Edge<br/>Zone A ↔ Zone B<br/>indicates adjacency"]
-    CreateEdge --> EdgeContinue{More Zone<br/>Pairs?}
+    CheckShared -->|是| CreateEdge["建立邊<br/>區域A ↔ 區域B<br/>表示相鄰"]
+    CreateEdge --> EdgeContinue{還有<br/>更多<br/>區域對?}
     
-    CheckShared -->|NO| NoEdge["✗ No Connection"]
+    CheckShared -->|否| NoEdge["無連接"]
     NoEdge --> EdgeContinue
     
-    EdgeContinue -->|YES| EdgeLoop
-    EdgeContinue -->|NO| SaveJSON["💾 Save to JSON File<br/>detections, clusters,<br/>zones, edges"]
+    EdgeContinue -->|是| EdgeLoop
+    EdgeContinue -->|否| SaveJSON["保存到<br/>JSON檔案<br/>偵測、聚類、邊"]
     
-    SaveJSON --> RenderMap["🎨 Render Topological<br/>Map Image<br/>Nodes=Zones, Edges=Paths"]
-    RenderMap --> SaveImage["💾 Save Map Image<br/>to Filesystem"]
-    SaveImage --> OperatorReview2["👤 Operator Reviews<br/>Rendered Map"]
+    SaveJSON --> RenderMap["渲染拓樸<br/>地圖影像<br/>節點=區域"]
+    RenderMap --> SaveImage["保存地圖<br/>影像到<br/>檔案系統"]
+    SaveImage --> OperatorReview2["操作員<br/>檢視<br/>渲染地圖"]
     
-    OperatorReview2 --> MapAccept{Map<br/>Acceptable?}
+    OperatorReview2 --> MapAccept{地圖<br/>可接受?}
     
-    MapAccept -->|NO| ManualAnnotate["✏️ Operator Manually<br/>Annotates Zones<br/>e.g., 'Produce', 'Meat'"]
-    ManualAnnotate --> UpdateMap["🔄 System Updates Map"]
-    UpdateMap --> SaveFinal["💾 Save Finalized<br/>Version"]
-    SaveFinal --> EndSuccess([End - Map Complete])
+    MapAccept -->|否| ManualAnnotate["操作員<br/>手動標注<br/>區域名稱"]
+    ManualAnnotate --> UpdateMap["系統<br/>更新<br/>地圖"]
+    UpdateMap --> SaveFinal["保存最終<br/>版本"]
+    SaveFinal --> EndSuccess([結束 - 地圖完成])
     
-    MapAccept -->|YES| SaveFinal
+    MapAccept -->|是| SaveFinal
     
     style Start fill:#90EE90
     style EndSuccess fill:#90EE90
@@ -225,53 +225,53 @@ graph TD
 
 ---
 
-### AD4: Query Product Location
+### AD4: 查詢產品位置
 
-**Purpose**: User searches for product; system returns directions on pre-built map
+**Purpose**: 使用者搜尋產品；系統在預建地圖上返回方向
 
 ```mermaid
 graph TD
-    Start([Start]) --> UserQuery["👤 User Enters<br/>Product Query<br/>e.g., 'milk' or 'SKU-12345'"]
-    UserQuery --> CheckMap{Store Map<br/>Loaded?}
+    Start([開始]) --> UserQuery["使用者輸入<br/>產品查詢<br/>例如：牛奶或SKU-12345"]
+    UserQuery --> CheckMap{商店地圖<br/>是否<br/>已加載?}
     
-    CheckMap -->|NO| LoadMap["💾 System Loads<br/>Offline Map from<br/>Database"]
-    LoadMap --> FuzzyMatch["🔍 System Fuzzy-Matches<br/>Query against<br/>Knowledge Base"]
+    CheckMap -->|否| LoadMap["系統從<br/>資料庫<br/>加載離線地圖"]
+    LoadMap --> FuzzyMatch["系統模糊匹配<br/>查詢與<br/>知識庫"]
     
-    CheckMap -->|YES| FuzzyMatch
+    CheckMap -->|是| FuzzyMatch
     
-    FuzzyMatch --> DecisionFound{Product<br/>Found?}
+    FuzzyMatch --> DecisionFound{產品<br/>是否<br/>找到?}
     
-    DecisionFound -->|NO| Suggest["💡 System Suggests<br/>Similar Products or<br/>Shows Product List"]
-    Suggest --> DecisionRefine{User Refines<br/>Search?}
+    DecisionFound -->|否| Suggest["系統建議<br/>相似產品或<br/>顯示產品列表"]
+    Suggest --> DecisionRefine{使用者<br/>細化<br/>搜尋?}
     
-    DecisionRefine -->|YES| UserQuery
-    DecisionRefine -->|NO| EndNoProduct([End - No Directions])
+    DecisionRefine -->|是| UserQuery
+    DecisionRefine -->|否| EndNoProduct([結束 - 無方向])
     
-    DecisionFound -->|YES| IdentifyZone["🗺️ Identify Zone(s)<br/>Where Product<br/>is Located"]
-    IdentifyZone --> ComputePath["📍 Compute Shortest<br/>Path using Graph<br/>Start: Current Location<br/>End: Target Zone"]
+    DecisionFound -->|是| IdentifyZone["確定產品<br/>所在<br/>的區域"]
+    IdentifyZone --> ComputePath["計算最短路徑<br/>開始：目前位置<br/>結束：目標區域"]
     
-    ComputePath --> DecisionPath{Path<br/>Found?}
+    ComputePath --> DecisionPath{路徑<br/>是否<br/>找到?}
     
-    DecisionPath -->|NO| PathError["❌ Product Unreachable<br/>or Path Error"]
-    PathError --> NotifyUser["⚠️ System Notifies<br/>User of Issue"]
-    NotifyUser --> EndNoPath([End - Path Not Found])
+    DecisionPath -->|否| PathError["產品無法<br/>到達或<br/>路徑錯誤"]
+    PathError --> NotifyUser["系統通知<br/>使用者<br/>問題"]
+    NotifyUser --> EndNoPath([結束 - 路徑未找到])
     
-    DecisionPath -->|YES| BuildDirections["🎯 Build Step-by-Step<br/>Directions"]
-    BuildDirections --> Step1["Step 1: Enter Store<br/>→ Aisle Entrance"]
-    BuildDirections --> Step2["Step 2: Walk to<br/>Frozen Section"]
-    BuildDirections --> Step3["Step 3: Find<br/>Milk Shelf"]
+    DecisionPath -->|是| BuildDirections["建立<br/>逐步<br/>方向"]
+    BuildDirections --> Step1["步驟1：進入商店<br/>到走道入口"]
+    BuildDirections --> Step2["步驟2：走到<br/>冷凍區域"]
+    BuildDirections --> Step3["步驟3：找到<br/>牛奶架"]
     
-    Step1 --> DisplayDirections["📋 System Displays<br/>All Directions<br/>to User"]
+    Step1 --> DisplayDirections["系統顯示<br/>所有方向<br/>給使用者"]
     Step2 --> DisplayDirections
     Step3 --> DisplayDirections
     
-    DisplayDirections --> DecisionVisual{User Wants<br/>Visual<br/>Navigation?}
+    DisplayDirections --> DecisionVisual{使用者<br/>想要<br/>視覺導航?}
     
-    DecisionVisual -->|YES| StartVisual["📸 Start Visual<br/>Navigation Session<br/>AD1 + AD2"]
-    StartVisual --> EndVisual([End - Visual Nav Started])
+    DecisionVisual -->|是| StartVisual["開始視覺<br/>導航會話<br/>AD1 + AD2"]
+    StartVisual --> EndVisual([結束 - 視覺導航開始])
     
-    DecisionVisual -->|NO| TextNav["📄 User Follows<br/>Text Directions"]
-    TextNav --> EndText([End - Text Directions])
+    DecisionVisual -->|否| TextNav["使用者跟隨<br/>文字<br/>方向"]
+    TextNav --> EndText([結束 - 文字方向])
     
     style Start fill:#90EE90
     style EndNoProduct fill:#FFB6C6
@@ -291,59 +291,59 @@ graph TD
 
 ---
 
-## Diet Analysis Module
+## 飲食分析模組
 
-### AD5: Log Diet & Nutrition
+### AD5: 記錄飲食與營養
 
-**Purpose**: Main use case for recording food intake (can use scanning OR manual entry)
+**Purpose**: 記錄食物攝取的主要使用案例（可使用掃描或手動輸入）
 
 ```mermaid
 graph TD
-    Start([Start]) --> OpenTab["👤 User Opens<br/>Diet Analysis Tab"]
-    OpenTab --> DisplayInterface["📊 System Displays<br/>Diet Logging Interface"]
-    DisplayInterface --> DecisionInput{How to<br/>Enter<br/>Data?}
+    Start([開始]) --> OpenTab["使用者打開<br/>飲食分析<br/>頁籤"]
+    OpenTab --> DisplayInterface["系統顯示<br/>飲食記錄<br/>介面"]
+    DisplayInterface --> DecisionInput{如何<br/>輸入<br/>資料?}
     
-    DecisionInput -->|SCAN| ScanPath["📸 Proceed to AD6<br/>Scan Nutrition Label"]
+    DecisionInput -->|掃描| ScanPath["進行到AD6<br/>掃描營養<br/>標籤"]
     ScanPath --> SkipManual[ ]
     
-    DecisionInput -->|MANUAL| ManualForm["📋 System Displays<br/>Manual Entry Form"]
-    ManualForm --> EnterFood["👤 User Enters<br/>Food Name<br/>e.g., 'Apple'"]
-    EnterFood --> EnterNutrition["👤 User Enters<br/>Nutrition Values<br/>Calories, Carbs,<br/>Protein, Fat"]
-    EnterNutrition --> SubmitForm["✅ User Submits Form"]
+    DecisionInput -->|手動| ManualForm["系統顯示<br/>手動輸入<br/>表單"]
+    ManualForm --> EnterFood["使用者輸入<br/>食物名稱<br/>例如：蘋果"]
+    EnterFood --> EnterNutrition["使用者輸入<br/>營養值<br/>卡路里、碳水、<br/>蛋白質、脂肪"]
+    EnterNutrition --> SubmitForm["使用者<br/>提交<br/>表單"]
     
-    SubmitForm --> DecisionValid{Input<br/>Valid?<br/>Non-empty name,<br/>positive values?}
+    SubmitForm --> DecisionValid{輸入<br/>有效?<br/>非空名稱、<br/>正數值?}
     
-    DecisionValid -->|NO| ShowError["❌ System Shows<br/>Error Message"]
-    ShowError --> DecisionRetry{User<br/>Corrects<br/>Input?}
+    DecisionValid -->|否| ShowError["系統顯示<br/>錯誤<br/>訊息"]
+    ShowError --> DecisionRetry{使用者<br/>修正<br/>輸入?}
     
-    DecisionRetry -->|YES| EnterFood
-    DecisionRetry -->|NO| EndNoSave([End - No Save])
+    DecisionRetry -->|是| EnterFood
+    DecisionRetry -->|否| EndNoSave([結束 - 未保存])
     
-    DecisionValid -->|YES| SavePhase["💾 Phase: Save Record"]
-    SavePhase --> CreateRecord["📝 System Creates Record<br/>Food name + Nutrition<br/>values + Timestamp<br/>+ User ID"]
-    CreateRecord --> StoreDB["💾 Store Record in<br/>Local Database"]
+    DecisionValid -->|是| SavePhase["階段：保存記錄"]
+    SavePhase --> CreateRecord["系統建立記錄<br/>食物名稱+營養值<br/>+時間戳記<br/>+使用者ID"]
+    CreateRecord --> StoreDB["將記錄存儲<br/>到本地<br/>資料庫"]
     
-    SkipManual --> SummarizePhase["📊 Phase: Summarize<br/>Daily Calories"]
+    SkipManual --> SummarizePhase["階段：<br/>總結每日<br/>卡路里"]
     StoreDB --> SummarizePhase
     
-    SummarizePhase --> QueryRecords["🔍 System Queries All<br/>Records for<br/>Current Date"]
-    QueryRecords --> CalcTotals["🧮 Calculate Daily Totals<br/>Calories: 2150 kcal<br/>Carbs: 285g<br/>Protein: 95g<br/>Fat: 72g"]
+    SummarizePhase --> QueryRecords["系統查詢<br/>目前日期<br/>的所有記錄"]
+    QueryRecords --> CalcTotals["計算每日總計<br/>卡路里：2150卡<br/>碳水：285克<br/>蛋白質：95克<br/>脂肪：72克"]
     
-    CalcTotals --> DecisionGoal{Daily Goal<br/>Exists?}
+    CalcTotals --> DecisionGoal{每日<br/>目標<br/>是否<br/>存在?}
     
-    DecisionGoal -->|NO| NoGoal["📋 Display Totals<br/>without Goals"]
+    DecisionGoal -->|否| NoGoal["顯示總計<br/>不含<br/>目標"]
     NoGoal --> UpdateDisplay
     
-    DecisionGoal -->|YES| CalcGoal["📊 Calculate Goal<br/>Progress<br/>Goal: 2000 kcal<br/>Consumed: 2150 kcal<br/>107.5% → EXCEEDED"]
-    CalcGoal --> DecisionExceeded{Goal<br/>Exceeded?}
+    DecisionGoal -->|是| CalcGoal["計算目標<br/>進度<br/>目標：2000卡<br/>已消耗：2150卡<br/>107.5% 超出"]
+    CalcGoal --> DecisionExceeded{目標<br/>是否<br/>超出?}
     
-    DecisionExceeded -->|YES| SendNotif["🔔 Send Notification<br/>to User"]
-    SendNotif --> UpdateDisplay["🎨 System Updates<br/>Diet Summary Display<br/>Today's totals + macros<br/>+ Goal progress<br/>+ Recent entries"]
+    DecisionExceeded -->|是| SendNotif["發送通知<br/>給使用者"]
+    SendNotif --> UpdateDisplay["系統更新<br/>飲食摘要顯示<br/>今日總計、巨量<br/>營養素、進度、<br/>最近的項目"]
     
-    DecisionExceeded -->|NO| UpdateDisplay
+    DecisionExceeded -->|否| UpdateDisplay
     
-    UpdateDisplay --> ShowSummary["📊 User Sees Updated<br/>Diet Summary"]
-    ShowSummary --> EndSuccess([End - Saved])
+    UpdateDisplay --> ShowSummary["使用者看到<br/>更新的<br/>飲食摘要"]
+    ShowSummary --> EndSuccess([結束 - 已保存])
     
     style Start fill:#90EE90
     style EndSuccess fill:#90EE90
@@ -361,51 +361,51 @@ graph TD
 
 ---
 
-### AD6: Scan Nutrition Label
+### AD6: 掃描營養標籤
 
-**Purpose**: User photographs nutrition label; OCR extracts values and saves record
+**Purpose**: 使用者拍攝營養標籤；OCR提取數值並保存記錄
 
 ```mermaid
 graph TD
-    Start([Start]) --> OpenTab["👤 User Opens<br/>Diet Analysis Tab"]
-    OpenTab --> SelectScan["👤 User Selects<br/>'Scan Nutrition Label'"]
-    SelectScan --> OpenCamera["📸 System Opens<br/>Camera Interface"]
-    OpenCamera --> AlignCamera["👤 User Aligns Camera<br/>with Nutrition Label"]
-    AlignCamera --> CapturePhoto["📷 User Captures<br/>Photo"]
-    CapturePhoto --> SendOCR["☁️ System Sends Image<br/>to PaddleOCR Service"]
+    Start([開始]) --> OpenTab["使用者打開<br/>飲食分析<br/>頁籤"]
+    OpenTab --> SelectScan["使用者選擇<br/>『掃描營養<br/>標籤』"]
+    SelectScan --> OpenCamera["系統打開<br/>相機<br/>介面"]
+    OpenCamera --> AlignCamera["使用者將相機<br/>對齊<br/>營養標籤"]
+    AlignCamera --> CapturePhoto["使用者拍攝<br/>照片"]
+    CapturePhoto --> SendOCR["系統發送<br/>影像到<br/>PaddleOCR服務"]
     
-    SendOCR --> OCRProcess["🤖 PaddleOCR Processes<br/>Image & Recognizes<br/>Text"]
-    OCRProcess --> DecisionText{Text<br/>Successfully<br/>Extracted?}
+    SendOCR --> OCRProcess["PaddleOCR<br/>處理影像<br/>並識別文字"]
+    OCRProcess --> DecisionText{文字是否<br/>成功<br/>提取?}
     
-    DecisionText -->|NO| Unclear["❌ Label Unreadable<br/>or Unclear"]
-    Unclear --> RetakePrompt["📸 System Asks User<br/>to Retake<br/>Better lighting/angle"]
-    RetakePrompt --> DecisionRetake{User<br/>Retakes?}
+    DecisionText -->|否| Unclear["標籤無法<br/>讀取或<br/>不清楚"]
+    Unclear --> RetakePrompt["系統要求<br/>使用者<br/>重新拍攝"]
+    RetakePrompt --> DecisionRetake{使用者<br/>重新<br/>拍攝?}
     
-    DecisionRetake -->|YES| OpenCamera
-    DecisionRetake -->|NO| EndNoExtract([End - Not Extracted])
+    DecisionRetake -->|是| OpenCamera
+    DecisionRetake -->|否| EndNoExtract([結束 - 未提取])
     
-    DecisionText -->|YES| ParseOCR["📝 System Parses<br/>OCR Output"]
-    ParseOCR --> ExtractValues["📋 System Extracts<br/>Nutrition Values<br/>Calories: 150 kcal<br/>Carbs: 20g<br/>Protein: 8g<br/>Fat: 3g"]
+    DecisionText -->|是| ParseOCR["系統解析<br/>OCR<br/>輸出"]
+    ParseOCR --> ExtractValues["系統提取<br/>營養值<br/>卡路里：150卡<br/>碳水：20克<br/>蛋白質：8克<br/>脂肪：3克"]
     
-    ExtractValues --> DecisionComplete{All Key<br/>Values<br/>Found?}
+    ExtractValues --> DecisionComplete{是否找到<br/>所有<br/>關鍵<br/>值?}
     
-    DecisionComplete -->|NO| MissingValues["⚠️ Missing Calories<br/>or Serving Size"]
-    MissingValues --> AskManual["❓ System Asks User<br/>to Enter Manually"]
-    AskManual --> ManualInput["👤 User Enters<br/>Missing Values"]
+    DecisionComplete -->|否| MissingValues["缺少卡路里<br/>或份量<br/>大小"]
+    MissingValues --> AskManual["系統要求<br/>使用者<br/>手動輸入"]
+    AskManual --> ManualInput["使用者輸入<br/>缺少的<br/>數值"]
     ManualInput --> CreateRecord
     
-    DecisionComplete -->|YES| CreateRecord["📝 System Creates<br/>Diet Record<br/>Food name + values<br/>+ Timestamp<br/>+ Source: Scanned"]
-    CreateRecord --> StoreDB["💾 Store Record<br/>in Database"]
+    DecisionComplete -->|是| CreateRecord["系統建立<br/>飲食記錄<br/>食物名稱+值<br/>+時間戳記<br/>+來源：掃描"]
+    CreateRecord --> StoreDB["將記錄<br/>存儲到<br/>資料庫"]
     
-    StoreDB --> SummarizePhase["📊 Phase: Summarize<br/>Daily Calories"]
-    SummarizePhase --> QueryRecords["🔍 Query All Records<br/>for Today"]
-    QueryRecords --> CalcTotals["🧮 Recalculate Totals<br/>and Update Display"]
+    StoreDB --> SummarizePhase["階段：<br/>總結每日<br/>卡路里"]
+    SummarizePhase --> QueryRecords["查詢今天<br/>的所有<br/>記錄"]
+    QueryRecords --> CalcTotals["重新計算<br/>總計並<br/>更新顯示"]
     
-    CalcTotals --> Confirmation["✅ User Sees<br/>Confirmation<br/>Food Logged Successfully"]
-    Confirmation --> DecisionAgain{Scan<br/>Another?}
+    CalcTotals --> Confirmation["使用者看到<br/>確認訊息<br/>食物記錄成功"]
+    Confirmation --> DecisionAgain{掃描<br/>另一項?}
     
-    DecisionAgain -->|YES| OpenCamera
-    DecisionAgain -->|NO| EndSuccess([End - Scan Complete])
+    DecisionAgain -->|是| OpenCamera
+    DecisionAgain -->|否| EndSuccess([結束 - 掃描完成])
     
     style Start fill:#90EE90
     style EndSuccess fill:#90EE90
@@ -423,65 +423,65 @@ graph TD
 
 ---
 
-## Legend
+## 圖例
 
-### Activity Diagram Symbols
+### 活動圖表符號
 
-| Symbol | Meaning |
+| 符號 | 含義 |
 |--------|---------|
-| ● (Filled circle) | Start activity |
-| ○ (Empty circle) | End activity |
-| Rectangle | Activity/Action (process step) |
-| Diamond | Decision point (YES/NO branch) |
-| Arrow → | Flow of control |
-| ∥ | Parallel processing (fork/join bar) |
-| Rectangle with lines | Swimlane (actor/component) |
-| ┌─┐ | Subactivity/Phase group |
+| ● (實心圓) | 開始活動 |
+| ○ (空心圓) | 結束活動 |
+| 矩形 | 活動/動作（流程步驟） |
+| 菱形 | 決策點（是/否分支） |
+| 箭頭 → | 控制流 |
+| ∥ | 平行處理（開始/結束點） |
+| 有邊框的矩形 | 泳道（參與者/元件） |
+| ┌─┐ | 子活動/階段組 |
 
-### Key Concepts
+### 關鍵概念
 
-- **Decision Points**: Branches flow based on conditions (YES/NO)
-- **Parallel Processing**: Multiple activities can occur simultaneously (marked with ∥)
-- **Swimlanes**: Show which actor/component performs each activity
-- **Loops**: Activities can repeat based on conditions
-- **Subactivities**: Complex activities can be broken into phases
-
----
-
-## How to Use These Diagrams
-
-1. **In Visual Paradigm**:
-   - Create a new Activity Diagram
-   - Add swimlanes for each actor (User, System, Services)
-   - Add activities and decision points following the flow above
-   - Connect with arrows
-
-2. **In Lucidchart**:
-   - Use the activity diagram shapes
-   - Organize by swimlanes
-   - Add decision branches with diamond shapes
-
-3. **In Draw.io / Miro**:
-   - Create swimlane containers
-   - Add activity shapes (rectangles) and decision shapes (diamonds)
-   - Connect with arrows
-
-4. **In Figma** (with plugins):
-   - Use diagram components
-   - Follow the flow structure above
+- **決策點**：根據條件分支流程（是/否）
+- **平行處理**：多項活動可同時進行（用∥標記）
+- **泳道**：顯示哪位參與者/元件執行各活動
+- **迴圈**：活動可根據條件重複
+- **子活動**：複雜活動可分解為多個階段
 
 ---
 
-## Notes
+## 如何使用這些圖表
 
-- These activity diagrams represent the **happy paths** and **common exception flows**
-- Each diagram can be expanded with more detail as needed
-- Decision outcomes are marked with brackets: `[Decision: ...]`
-- Parallel activities are shown in boxes with vertical lines: `├─`, `└─`
-- For implementation, focus on swimlanes to understand responsibility distribution
+1. **在Visual Paradigm中**：
+   - 建立新的活動圖表
+   - 為每位參與者新增泳道（使用者、系統、服務）
+   - 按照上述流程新增活動和決策點
+   - 用箭頭連接
+
+2. **在Lucidchart中**：
+   - 使用活動圖表形狀
+   - 按泳道組織
+   - 用菱形新增決策分支
+
+3. **在Draw.io / Miro中**：
+   - 建立泳道容器
+   - 新增活動形狀（矩形）和決策形狀（菱形）
+   - 用箭頭連接
+
+4. **在Figma中**（帶外掛）：
+   - 使用圖表元件
+   - 按照上述流程結構
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-06-12  
-**For**: OOSD Assignment - Vision Recognition & Diet Analysis Module
+## 注意事項
+
+- 這些活動圖表代表**正常路徑**和**常見例外流程**
+- 每個圖表可根據需要擴展以增加更多細節
+- 決策結果用括號標記：`[決策：...]`
+- 平行活動在框中用豎線顯示：`├─`、`└─`
+- 實現時，重點關注泳道以理解責任分配
+
+---
+
+**文件版本**：1.0  
+**最後更新**：2026-06-12  
+**用途**：OOSD作業 - 視覺語意辨識與飲食分析模組
